@@ -1,0 +1,508 @@
+
+<#import "template.ftl" as layout>
+<@layout.registrationLayout displayMessage=!messagesPerField.existsError('username','password') ; section>
+<#if section = "header">
+    ${msg("loginAccountTitle")}
+<#elseif section = "form">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%;
+  height: 100vh;
+  font-family: 'Inter', sans-serif !important;
+  background-color: #F8FAFC !important;
+  color: #0F172A;
+  overflow: hidden;
+  position: relative;
+  color-scheme: light;
+}
+
+/* Canvas handles background */
+
+/* Canvas handles background */
+
+
+.auth-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  width: 100%;
+  max-width: 980px;
+  height: 90vh;
+  max-height: 700px;
+  background: transparent;
+  gap: 30px;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* LEFT PANEL */
+.left-panel {
+  flex: 0 1 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin-left: 20px;
+}
+
+.illustration-circle {
+  width: 200px;
+  height: 200px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 0 40px rgba(217, 244, 91, 0.15);
+  overflow: hidden;
+}
+
+.illustration-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.left-title {
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 900;
+  line-height: 1.1;
+  color: #0F172A;
+  margin-bottom: 12px;
+  max-width: 400px;
+}
+
+.left-title .highlight { color: #4F46E5; }
+
+.left-description {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #9CA3AF;
+  max-width: 380px;
+  margin-bottom: 20px;
+}
+
+.badges-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.badge {
+  background: rgba(79, 70, 229, 0.05);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  color: #4F46E5;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.stat { display: flex; flex-direction: column; align-items: center; }
+.stat .val { font-size: 24px; font-weight: 800; color: #0F172A; }
+.stat .lbl { font-size: 11px; color: #9CA3AF; font-weight: 500; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px;}
+
+/* RIGHT PANEL */
+.right-panel {
+  flex: 0 1 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.top-links {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 20px;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #4F46E5;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.lang {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #0F172A;
+  background: rgba(255,255,255,0.05);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.form-card {
+  width: 100%;
+  max-width: 420px;
+  background: #FFFFFF;
+  border: 1px solid rgba(217, 244, 91, 0.1);
+  border-radius: 24px;
+  padding: 32px 36px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.form-card h2 {
+  font-size: 26px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 6px;
+  color: #0F172A;
+}
+
+.form-card .subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: #9CA3AF;
+  margin-bottom: 24px;
+}
+
+.fg { margin-bottom: 16px; }
+
+.fg label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #9CA3AF;
+  margin-bottom: 8px;
+}
+
+.input-wrap { position: relative; }
+.input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #6B7280; transition: 0.2s;}
+.input-field {
+  width: 100%;
+  height: 46px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 0 14px 0 40px;
+  font-size: 14px;
+  color: #0F172A;
+  outline: none;
+  transition: all 0.2s;
+}
+.input-field:focus { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+.input-field::placeholder { color: #94A3B8; }
+.fg:has(.input-field:focus) .input-icon { color: #4F46E5; }
+
+.eye-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #6B7280; cursor: pointer; }
+
+.options { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 24px; }
+.remember { display: flex; align-items: center; gap: 8px; color: #9CA3AF; font-size: 13px; font-weight: 500; }
+.remember input { width: 16px; height: 16px; accent-color: #4F46E5; cursor: pointer; }
+.forgot { color: #4F46E5; text-decoration: none; font-size: 13px; font-weight: 700; }
+
+.btn-primary {
+  width: 100%;
+  height: 48px;
+  background: #4F46E5;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: #4338CA; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25); }
+
+.divider { display: flex; align-items: center; gap: 14px; margin: 24px 0; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #E2E8F0; }
+.divider span { color: #6B7280; font-weight: 600; font-size: 12px; }
+
+.socials { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.social-btn {
+  height: 42px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.social-btn:hover { background: #F1F5F9; }
+
+.form-bottom { text-align: center; margin-top: 24px; font-size: 13px; color: #9CA3AF; }
+.form-bottom a { color: #4F46E5; font-weight: 700; text-decoration: none; margin-left: 4px; }
+
+.al { padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; background: rgba(220, 38, 38, 0.1); color: #FCA5A5; border: 1px solid rgba(220, 38, 38, 0.2); }
+
+#kc-header, #kc-header-wrapper, .pf-v5-c-brand, .pf-v5-c-login__main-header, .pf-v5-c-title, .pf-v5-c-login__footer, .pf-v5-c-login__info, #kc-info, #kc-locale, .pf-v5-c-login__header, [class*="pf-v5-c-brand"], img[src*="logo"], img[alt*="logo" i], img[alt*="keycloak" i], .pf-v5-c-page__header, .pf-v5-c-masthead, nav.pf-v5-c-nav, .pf-v5-c-page__sidebar, #kc-page-title, .pf-v5-c-login__main-header-desc { display: none !important; }
+.pf-v5-c-login, .pf-v5-c-login__container, .pf-v5-c-login__main, .pf-v5-c-login__main-body, .pf-v5-l-grid, .pf-v5-l-grid__item, .pf-v5-l-split, .pf-v5-c-page, .pf-v5-c-page__main, .pf-v5-c-login__main-footer-band { all: unset !important; display: block !important; width: 100% !important; }
+
+@media(max-width: 900px) {
+  body { overflow-y: auto; padding: 20px; height: auto; display: block;}
+  .auth-container { flex-direction: column; height: auto; max-height: none; gap: 30px; }
+  .left-panel { display: none; }
+  .right-panel { flex: 1; }
+}
+</style>
+
+<div class="auth-container">
+  <div class="left-panel">
+    <div class="illustration-circle">
+      <img src="/images/eduai-student-learning.jpg" alt="EduAI" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop';"/>
+    </div>
+    
+    <h1 class="left-title">Apprenez avec <span class="highlight">intelligence</span>, progressez avec <span class="highlight">passion</span>.</h1>
+    <p class="left-description">Rejoignez des milliers d'étudiants qui transforment leur avenir grâce à nos cours interactifs et notre tuteur IA.</p>
+    
+    <div class="badges-row">
+      <span class="badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Tuteur IA</span>
+      <span class="badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Quiz adaptatifs</span>
+      <span class="badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Suivi en temps réel</span>
+    </div>
+    
+    <div class="stats-row">
+      <div class="stat"><span class="val">260+</span><span class="lbl">Cours</span></div>
+      <div class="stat"><span class="val">5 340+</span><span class="lbl">Étudiants</span></div>
+      <div class="stat"><span class="val">99%</span><span class="lbl">Satisfaction</span></div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="top-links">
+      <a href="http://localhost:3000" class="back-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Retour au site</a>
+      <div class="lang">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Français
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h2>Bienvenue !</h2>
+      <p class="subtitle">Connectez-vous pour continuer</p>
+
+      <#if message?has_content && (message.type != 'warning' || !isAppInitiatedAction??)>
+        <div class="al">${kcSanitize(message.summary)?no_esc}</div>
+      </#if>
+
+      <form id="kc-form-login" onsubmit="login.disabled = true; return true;" action="${url.loginAction}" method="post">
+        
+        <div class="fg">
+          <label for="username">Adresse e-mail</label>
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <input id="username" name="username" value="${(login.username!'')}" type="text" class="input-field" placeholder="Entrez votre adresse e-mail" autofocus autocomplete="username" />
+          </div>
+        </div>
+
+        <div class="fg">
+          <label for="password">Mot de passe</label>
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input id="password" name="password" type="password" class="input-field" placeholder="Entrez votre mot de passe" autocomplete="current-password" />
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+        </div>
+
+        <div class="options">
+          <label class="remember">
+            <#if login.rememberMe??>
+              <input type="checkbox" name="rememberMe" checked>
+            <#else>
+              <input type="checkbox" name="rememberMe">
+            </#if>
+            Se souvenir de moi
+          </label>
+          <a href="${url.loginResetCredentialsUrl}" class="forgot">Mot de passe oublié ?</a>
+        </div>
+
+        <button name="login" id="kc-login" type="submit" class="btn-primary">
+          Se connecter <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+
+        <#if realm.password && social.providers?? && social.providers?has_content>
+          <div class="divider"><span>ou continuer avec</span></div>
+          <div class="socials">
+            <#list social.providers as p>
+              <a href="${p.loginUrl}" id="social-${p.alias}" class="social-btn ${p.providerId}">
+                <#if p.alias == "google">
+                  <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                  Google
+                <#elseif p.alias == "github">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#4F46E5" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                  GitHub
+                <#else>
+                  ${p.displayName!}
+                </#if>
+              </a>
+            </#list>
+          </div>
+        </#if>
+
+        <div class="form-bottom">
+          <p>Pas encore de compte ? <a href="${url.registrationUrl}">Créer un compte</a></p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const eyeIcons = document.querySelectorAll('.eye-icon');
+    eyeIcons.forEach(icon => {
+      icon.addEventListener('click', function() {
+        const input = this.previousElementSibling;
+        if (input.type === 'password') {
+          input.type = 'text';
+          this.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/>';
+        } else {
+          input.type = 'password';
+          this.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+        }
+      });
+    });
+});
+</script>
+
+<canvas id="network-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:0;"></canvas>
+<script>
+  (function() {
+    const canvas = document.getElementById('network-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+    let particles = [];
+    let mouse = { x: null, y: null };
+    const CONNECTION_DISTANCE = 160;
+    const COLORS = [
+      { r: 59, g: 130, b: 246 },
+      { r: 14, g: 165, b: 233 },
+      { r: 20, g: 184, b: 166 }
+    ];
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initParticles();
+    };
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.3;
+        this.vy = (Math.random() - 0.5) * 0.3;
+        this.baseRadius = Math.random() * 2.5 + 1.2;
+        this.radius = this.baseRadius;
+        this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        this.pulseSpeed = 0.012 + Math.random() * 0.012;
+        this.depth = Math.random() * 0.5 + 0.5;
+      }
+      update() {
+        this.pulsePhase += this.pulseSpeed;
+        this.radius = this.baseRadius + Math.sin(this.pulsePhase) * 0.6;
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+      draw(ox, oy) {
+        const dx = this.x + ox * this.depth;
+        const dy = this.y + oy * this.depth;
+        const { r, g, b } = this.color;
+        const alpha = 0.55;
+        ctx.beginPath();
+        ctx.arc(dx, dy, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(' + r + ',' + g + ',' + b + ',0.3)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+    const initParticles = () => {
+      particles = [];
+      const area = canvas.width * canvas.height;
+      const count = Math.min(Math.max(Math.floor(area / 16000), 30), 100);
+      for (let i = 0; i < count; i++) particles.push(new Particle());
+    };
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let ox = 0, oy = 0;
+      if (mouse.x !== null) {
+        ox = (canvas.width / 2 - mouse.x) * 0.03;
+        oy = (canvas.height / 2 - mouse.y) * 0.03;
+      }
+      for (const p of particles) p.update();
+      for (let i = 0; i < particles.length; i++) {
+        const a = particles[i];
+        const ax = a.x + ox * a.depth;
+        const ay = a.y + oy * a.depth;
+        for (let j = i + 1; j < particles.length; j++) {
+          const b = particles[j];
+          const bx = b.x + ox * b.depth;
+          const by = b.y + oy * b.depth;
+          const dist = Math.hypot(ax - bx, ay - by);
+          if (dist < CONNECTION_DISTANCE) {
+            const fade = 1 - dist / CONNECTION_DISTANCE;
+            const lineAlpha = Math.min(fade * 0.18, 0.3);
+            const grad = ctx.createLinearGradient(ax, ay, bx, by);
+            grad.addColorStop(0, 'rgba(' + a.color.r + ',' + a.color.g + ',' + a.color.b + ',' + lineAlpha + ')');
+            grad.addColorStop(1, 'rgba(' + b.color.r + ',' + b.color.g + ',' + b.color.b + ',' + lineAlpha + ')');
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(bx, by);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 0.7;
+            ctx.stroke();
+          }
+        }
+      }
+      for (const p of particles) p.draw(ox, oy);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    const onMove = (e) => { mouse.x = e.clientX; mouse.y = e.clientY; };
+    const onLeave = () => { mouse.x = null; mouse.y = null; };
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseleave', onLeave);
+    resizeCanvas();
+    animate();
+  })();
+</script>
+
+</#if>
+</@layout.registrationLayout>

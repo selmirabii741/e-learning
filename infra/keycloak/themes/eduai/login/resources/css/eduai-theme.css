@@ -1,0 +1,81 @@
+/* EduAI Keycloak Theme — Emerald/Lime Design System
+   This CSS supplements the inline styles in login.ftl and register.ftl.
+   It overrides any remaining PatternFly defaults that leak through. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ── Base Reset ── */
+html, body {
+    height: 100% !important;
+    margin: 0 !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    background-color: #0B3D2E !important;
+    background-image: none !important;
+    color: #fff !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+
+/* ── Hide body pseudo-elements (old blobs) ── */
+body::before, body::after {
+    display: none !important;
+}
+
+/* ── Reset PatternFly wrappers ── */
+.pf-v5-c-login,
+.pf-v5-c-login__container,
+.pf-v5-c-login__main,
+.pf-v5-c-login__main-body,
+.pf-v5-l-grid,
+.pf-v5-l-grid__item,
+.pf-v5-l-split,
+.pf-v5-c-page,
+.pf-v5-c-page__main,
+.pf-v5-c-login__main-footer,
+.pf-v5-c-login__main-footer-band {
+    all: unset !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+/* ── Hide Keycloak chrome ── */
+#kc-header, #kc-header-wrapper,
+.pf-v5-c-brand,
+.pf-v5-c-login__main-header,
+.pf-v5-c-login__main-header-desc,
+.pf-v5-c-title,
+.pf-v5-c-login__footer,
+.pf-v5-c-login__info,
+#kc-info, #kc-locale,
+.pf-v5-c-login__header,
+[class*="pf-v5-c-brand"],
+img[src*="logo"],
+img[alt*="logo" i],
+img[alt*="keycloak" i],
+.pf-v5-c-page__header,
+.pf-v5-c-masthead,
+header.pf-v5-c-page__header,
+nav.pf-v5-c-nav,
+.pf-v5-c-page__sidebar,
+#kc-page-title,
+#kc-registration,
+#kc-social-providers,
+.pf-v5-c-login__main-footer-band-item,
+h2#kc-providers-title,
+.pf-v5-c-divider, hr,
+.subtitle,
+.pf-v5-c-form__group-label-required {
+    display: none !important;
+}
+
+/* ── Selection color ── */
+::selection {
+    background: rgba(212, 225, 87, 0.3);
+    color: #fff;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }

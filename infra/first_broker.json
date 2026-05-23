@@ -1,0 +1,291 @@
+﻿[
+    {
+        "id":  "adb0d650-fa7a-44cd-8b21-7c708f14e47f",
+        "requirement":  "DISABLED",
+        "displayName":  "Review Profile",
+        "alias":  "review profile config",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED"
+                               ],
+        "configurable":  true,
+        "providerId":  "idp-review-profile",
+        "authenticationConfig":  "6e9b8593-ad62-44a5-968c-457cdb9cbb62",
+        "level":  0,
+        "index":  0,
+        "priority":  10
+    },
+    {
+        "id":  "e3408ec4-bbe9-48b5-8c98-7f02641f429a",
+        "requirement":  "REQUIRED",
+        "displayName":  "User creation or linking",
+        "description":  "Flow for the existing/non-existing user alternatives",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED",
+                                   "CONDITIONAL"
+                               ],
+        "configurable":  false,
+        "authenticationFlow":  true,
+        "flowId":  "9d8b256e-9b83-4496-b295-aeedad5c2223",
+        "level":  0,
+        "index":  1,
+        "priority":  20
+    },
+    {
+        "id":  "ae0b5cf6-31d0-428b-996a-c338ad9ec534",
+        "requirement":  "ALTERNATIVE",
+        "displayName":  "Create User If Unique",
+        "alias":  "create unique user config",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED"
+                               ],
+        "configurable":  true,
+        "providerId":  "idp-create-user-if-unique",
+        "authenticationConfig":  "bbbc74d8-82bd-4937-a2dc-f4a6608b28b0",
+        "level":  1,
+        "index":  0,
+        "priority":  10
+    },
+    {
+        "id":  "af50cc77-8316-43f1-8996-608229ee9269",
+        "requirement":  "ALTERNATIVE",
+        "displayName":  "Handle Existing Account",
+        "description":  "Handle what to do if there is existing account with same email/username like authenticated identity provider",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED",
+                                   "CONDITIONAL"
+                               ],
+        "configurable":  false,
+        "authenticationFlow":  true,
+        "flowId":  "eccff19d-bf92-4a5b-88ec-2fcf901ff483",
+        "level":  1,
+        "index":  1,
+        "priority":  20
+    },
+    {
+        "id":  "b67988c9-a9e1-4a71-99ec-4eb4cbe9d1b8",
+        "requirement":  "REQUIRED",
+        "displayName":  "Confirm link existing account",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED"
+                               ],
+        "configurable":  false,
+        "providerId":  "idp-confirm-link",
+        "level":  2,
+        "index":  0,
+        "priority":  10
+    },
+    {
+        "id":  "5c3be398-9f19-4282-9d69-cfa0bfc50295",
+        "requirement":  "REQUIRED",
+        "displayName":  "Account verification options",
+        "description":  "Method with which to verify the existing account",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED",
+                                   "CONDITIONAL"
+                               ],
+        "configurable":  false,
+        "authenticationFlow":  true,
+        "flowId":  "b9fa13f0-f211-41b3-beba-7a4d5078c128",
+        "level":  2,
+        "index":  1,
+        "priority":  20
+    },
+    {
+        "id":  "5bebeb84-da5b-4227-8cde-56215078394a",
+        "requirement":  "ALTERNATIVE",
+        "displayName":  "Verify existing account by Email",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED"
+                               ],
+        "configurable":  false,
+        "providerId":  "idp-email-verification",
+        "level":  3,
+        "index":  0,
+        "priority":  10
+    },
+    {
+        "id":  "578b9542-7fac-425c-85cf-930e6d90d2c3",
+        "requirement":  "ALTERNATIVE",
+        "displayName":  "Verify Existing Account by Re-authentication",
+        "description":  "Reauthentication of existing account",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED",
+                                   "CONDITIONAL"
+                               ],
+        "configurable":  false,
+        "authenticationFlow":  true,
+        "flowId":  "a5753753-78c8-4a6c-bfdf-90eba8794c5d",
+        "level":  3,
+        "index":  1,
+        "priority":  20
+    },
+    {
+        "id":  "0c322dd9-b382-476c-946e-7fa16620e7f0",
+        "requirement":  "REQUIRED",
+        "displayName":  "Username Password Form for identity provider reauthentication",
+        "requirementChoices":  [
+                                   "REQUIRED"
+                               ],
+        "configurable":  false,
+        "providerId":  "idp-username-password-form",
+        "level":  4,
+        "index":  0,
+        "priority":  10
+    },
+    {
+        "id":  "3497b879-3a23-4a92-837a-120eb7cc8539",
+        "requirement":  "CONDITIONAL",
+        "displayName":  "First broker login - Conditional 2FA",
+        "description":  "Flow to determine if any 2FA is required for the authentication",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED",
+                                   "CONDITIONAL"
+                               ],
+        "configurable":  false,
+        "authenticationFlow":  true,
+        "flowId":  "41c76f23-96e4-446d-8048-e0c37f81c076",
+        "level":  4,
+        "index":  1,
+        "priority":  20
+    },
+    {
+        "id":  "c202f96f-3b3d-4ef9-ad0b-359f94369f16",
+        "requirement":  "REQUIRED",
+        "displayName":  "Condition - user configured",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "DISABLED"
+                               ],
+        "configurable":  false,
+        "providerId":  "conditional-user-configured",
+        "level":  5,
+        "index":  0,
+        "priority":  10
+    },
+    {
+        "id":  "d9afbdee-e4fa-4a2f-9a94-96db4bc7b49d",
+        "requirement":  "REQUIRED",
+        "displayName":  "Condition - credential",
+        "alias":  "first-broker-login-conditional-credential",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "DISABLED"
+                               ],
+        "configurable":  true,
+        "providerId":  "conditional-credential",
+        "authenticationConfig":  "18ae37e2-498d-4511-848b-49eac2215533",
+        "level":  5,
+        "index":  1,
+        "priority":  20
+    },
+    {
+        "id":  "2a7e4d61-c399-4184-b5df-fe7cc123b42e",
+        "requirement":  "ALTERNATIVE",
+        "displayName":  "OTP Form",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED"
+                               ],
+        "configurable":  false,
+        "providerId":  "auth-otp-form",
+        "level":  5,
+        "index":  2,
+        "priority":  30
+    },
+    {
+        "id":  "2e2209c2-34bf-46b7-9176-c5316bfabf5f",
+        "requirement":  "DISABLED",
+        "displayName":  "WebAuthn Authenticator",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED"
+                               ],
+        "configurable":  false,
+        "providerId":  "webauthn-authenticator",
+        "level":  5,
+        "index":  3,
+        "priority":  40
+    },
+    {
+        "id":  "0eb34bde-3efb-4d17-99a8-d720926a87b7",
+        "requirement":  "DISABLED",
+        "displayName":  "Recovery Authentication Code Form",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED"
+                               ],
+        "configurable":  false,
+        "providerId":  "auth-recovery-authn-code-form",
+        "level":  5,
+        "index":  4,
+        "priority":  50
+    },
+    {
+        "id":  "6608f9fe-0a94-4818-86e9-b2f22391e0a4",
+        "requirement":  "CONDITIONAL",
+        "displayName":  "First Broker Login - Conditional Organization",
+        "description":  "Flow to determine if the authenticator that adds organization members is to be used",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED",
+                                   "CONDITIONAL"
+                               ],
+        "configurable":  false,
+        "authenticationFlow":  true,
+        "flowId":  "6f2ef8c1-0699-4ba0-839e-ea027e512dd5",
+        "level":  0,
+        "index":  2,
+        "priority":  60
+    },
+    {
+        "id":  "514a59ff-1b12-4659-9b2b-c1fd0d1acd72",
+        "requirement":  "REQUIRED",
+        "displayName":  "Condition - user configured",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "DISABLED"
+                               ],
+        "configurable":  false,
+        "providerId":  "conditional-user-configured",
+        "level":  1,
+        "index":  0,
+        "priority":  10
+    },
+    {
+        "id":  "2c1cc157-0af5-4ec7-a5f9-6a17830789c5",
+        "requirement":  "REQUIRED",
+        "displayName":  "Organization Member Onboard",
+        "requirementChoices":  [
+                                   "REQUIRED",
+                                   "ALTERNATIVE",
+                                   "DISABLED"
+                               ],
+        "configurable":  false,
+        "providerId":  "idp-add-organization-member",
+        "level":  1,
+        "index":  1,
+        "priority":  20
+    }
+]
