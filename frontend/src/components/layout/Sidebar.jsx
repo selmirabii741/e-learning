@@ -18,6 +18,108 @@ import Link from 'next/link';
 import { progressAPI, messagesAPI } from '@/lib/api';
 import NetworkBackground from '@/components/ui/NetworkBackground';
 
+// ─── Safe Role Check Helper ───
+const checkUserRole = (user) => {
+    if (!user) return { isAdmin: false, isInstructor: false, isStudent: true, role: 'student' };
+    
+    const roleValue = user.role || user.type || user.accountType || '';
+    const roleStr = String(roleValue).toLowerCase();
+    const nameStr = String(user.name || '').toLowerCase();
+    
+    const isAdmin = roleStr === 'admin' || 
+                    nameStr.includes('admin') || 
+                    (user.permissions && user.permissions.includes('admin'));
+                    
+    if (isAdmin) {
+        return { isAdmin: true, isInstructor: false, isStudent: false, role: 'admin' };
+    }
+    
+    const isInstructor = roleStr === 'instructor' || 
+                         roleStr === 'teacher' || 
+                         roleStr === 'professor';
+                         
+    if (isInstructor) {
+        return { isAdmin: false, isInstructor: true, isStudent: false, role: 'instructor' };
+    }
+    
+    return { isAdmin: false, isInstructor: false, isStudent: true, role: 'student' };
+};
+
+const getUserRoleLabel = (user, t) => {
+    const { role } = checkUserRole(user);
+    if (role === 'admin') {
+        return 'Admin';
+    }
+    if (role === 'instructor') {
+        return 'Professeur';
+    }
+    return t ? t('role.student') || 'Student' : 'Étudiant';
+};
+
+const getIconStylesByHref = (href, active) => {
+    if (active) {
+        return {
+            wrapperClass: "bg-white text-indigo-600 dark:text-indigo-600 shadow-sm flex items-center justify-center rounded-[10px] w-8 h-8 transition-all duration-300 flex-shrink-0",
+            iconClass: "w-[18px] h-[18px] text-indigo-600"
+        };
+    }
+    
+    const baseWrapper = "flex items-center justify-center rounded-[10px] w-8 h-8 transition-all duration-300 group-hover:scale-110 flex-shrink-0 ";
+    const baseIcon = "w-[18px] h-[18px]";
+
+    if (href === '/dashboard' || href === '/admin' || href === '/instructor/accueil') {
+        return {
+            wrapperClass: baseWrapper + "bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400",
+            iconClass: baseIcon
+        };
+    } else if (href === '/dashboard/my-courses' || href === '/instructor' || href === '/admin/courses') {
+        return {
+            wrapperClass: baseWrapper + "bg-violet-50/80 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400",
+            iconClass: baseIcon
+        };
+    } else if (href === '/courses' || href === '/admin/teachers' || href === '/admin/students') {
+        return {
+            wrapperClass: baseWrapper + "bg-blue-50/80 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400",
+            iconClass: baseIcon
+        };
+    } else if (href === '/dashboard/statistics' || href === '/instructor/analytics' || href === '/admin/analytics') {
+        return {
+            wrapperClass: baseWrapper + "bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400",
+            iconClass: baseIcon
+        };
+    } else if (href === '/messages' || href === '/admin/notifications') {
+        return {
+            wrapperClass: baseWrapper + "bg-orange-50/80 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400",
+            iconClass: baseIcon
+        };
+    } else if (href === '/forum' || href === '/admin/users') {
+        return {
+            wrapperClass: baseWrapper + "bg-fuchsia-50/80 dark:bg-fuchsia-950/40 text-fuchsia-600 dark:text-fuchsia-400",
+            iconClass: baseIcon
+        };
+    } else if (href === '/chat' || href === '/admin/verifications') {
+        return {
+            wrapperClass: baseWrapper + "bg-sky-50/80 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400",
+            iconClass: baseIcon
+        };
+    } else if (href === '/calendar') {
+        return {
+            wrapperClass: baseWrapper + "bg-rose-50/80 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400",
+            iconClass: baseIcon
+        };
+    } else if (href === '/games' || href === '/admin/reports') {
+        return {
+            wrapperClass: baseWrapper + "bg-amber-50/80 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400",
+            iconClass: baseIcon
+        };
+    } else {
+        return {
+            wrapperClass: baseWrapper + "bg-slate-50/80 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400",
+            iconClass: baseIcon
+        };
+    }
+};
+
 
 function NotificationBell() {
     const [open, setOpen] = useState(false);
@@ -26,7 +128,8 @@ function NotificationBell() {
     const { user } = useAuthStore();
 
     useEffect(() => {
-        if (user?.role === 'instructor') {
+        const { isAdmin, isInstructor } = checkUserRole(user);
+        if (isInstructor) {
             setNotifications([
                 { id: 1, type: 'student', title: 'Nouvel étudiant inscrit', desc: "Ahmed Ben Ali s'est inscrit à votre cours React", time: 'Il y a 2 min', read: false, dateGroup: "AUJOURD'HUI" },
                 { id: 2, type: 'assignment', title: 'Devoir rendu', desc: 'Mariam K. a rendu le devoir "Composants React"', time: 'Il y a 1 heure', read: false, dateGroup: "AUJOURD'HUI" },
@@ -34,7 +137,7 @@ function NotificationBell() {
                 { id: 4, type: 'comment', title: 'Nouveau commentaire', desc: 'Sara J. a commenté le cours "Python pour débutants"', time: 'Hier, 18:45', read: true, dateGroup: "HIER" },
                 { id: 5, type: 'message', title: 'Message reçu', desc: 'Vous avez un nouveau message de Sarah J.', time: 'Hier, 16:20', read: true, dateGroup: "HIER" },
             ]);
-        } else if (user?.role === 'student') {
+        } else if (!isAdmin) {
             progressAPI.getMyProgress().then(({ data }) => {
                 const items = [];
                 (data.progress || []).forEach((p) => {
@@ -278,16 +381,24 @@ function getAdminNav(t) {
 function getInstructorNav(t) {
     return [
         {
-            title: '', items: [
+            title: 'Enseignement', items: [
                 { href: '/instructor/accueil', icon: Home, label: 'Accueil', exact: true },
-                { href: '/instructor', icon: BookOpen, label: t('nav.myCourses') },
-                { href: '/instructor/students', icon: Users, label: t('nav.myStudents') },
-                { href: '/instructor/analytics', icon: BarChart2, label: t('nav.analytics') },
-                { href: '/instructor/requests', icon: CheckCircle, label: t('nav.requests') },
-                { href: '/messages', icon: MessageSquare, label: t('nav.messages') },
-                { href: '/forum', icon: MessagesSquare, label: t('nav.forum') },
+                { href: '/instructor', icon: BookOpen, label: t('nav.myCourses') || 'Mes cours' },
+                { href: '/instructor/students', icon: Users, label: t('nav.myStudents') || 'Mes étudiants' },
+                { href: '/instructor/analytics', icon: BarChart2, label: t('nav.analytics') || 'Analyses' },
+            ]
+        },
+        {
+            title: 'Social & Outils', items: [
+                { href: '/instructor/requests', icon: CheckCircle, label: t('nav.requests') || 'Demandes' },
+                { href: '/messages', icon: MessageSquare, label: t('nav.messages') || 'Messages' },
+                { href: '/forum', icon: MessagesSquare, label: t('nav.forum') || 'Forum' },
                 { href: '/calendar', icon: Calendar, label: 'Calendrier' },
-                { href: '/profile', icon: Settings, label: t('nav.settings') },
+            ]
+        },
+        {
+            title: 'Système', items: [
+                { href: '/profile', icon: Settings, label: t('nav.settings') || 'Paramètres' },
             ]
         }
     ];
@@ -296,19 +407,27 @@ function getInstructorNav(t) {
 function getStudentNav(t) {
     return [
         {
-            title: '', items: [
+            title: 'Apprentissage', items: [
                 { href: '/dashboard', icon: Home, label: 'Accueil', exact: true },
                 { href: '/dashboard/my-courses', icon: BookOpen, label: 'Mes cours' },
                 { href: '/courses', icon: Folder, label: 'Liste de cours' },
                 { href: '/dashboard/statistics', icon: BarChart2, label: 'Progression' },
+            ]
+        },
+        {
+            title: 'Social & Outils', items: [
                 { href: '/messages', icon: MessageSquare, label: 'Messages' },
                 { href: '/forum', icon: MessagesSquare, label: 'Forum' },
                 { href: '/chat', icon: Bot, label: 'Chat globale' },
                 { href: '/calendar', icon: Calendar, label: 'Calendrier' },
                 { href: '/games', icon: Gamepad2, label: 'Jeux de concentration' },
-                { href: '/profile', icon: Settings, label: 'Paramètres' },
             ]
         },
+        {
+            title: 'Système', items: [
+                { href: '/profile', icon: Settings, label: 'Paramètres' },
+            ]
+        }
     ];
 }
 
@@ -402,55 +521,104 @@ export default function Sidebar({ children }) {
     }, [pathname]);
 
     const SidebarContent = ({ compact = false }) => (
-        <div
-            className="flex flex-col h-full"
-            style={{
-                background: '#fff',
-                borderRight: '1px solid #eef2f6',
-            }}
-        >
+        <div className="flex flex-col h-full bg-white dark:bg-[#0B0F19] transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative z-10 border-r border-slate-100 dark:border-white/5">
             {/* ── Logo ─── */}
-            <div className={`py-6 flex items-center justify-between ${compact ? 'px-3' : 'px-6'}`}>
+            <div className={`py-6 flex items-center justify-between ${compact ? 'px-3' : 'px-6'} border-b border-slate-50 dark:border-white/[0.02]`}>
                 <div className={`flex items-center ${compact ? 'justify-center w-full' : 'gap-3'}`}>
-                    <div className="w-10 h-10 rounded-[14px] flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, #4F46E5, #6366F1)', boxShadow: '0 4px 14px rgba(217, 244, 91, 0.3)' }}>
-                        <GraduationCap className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-[14px] bg-gradient-to-tr from-[#4F46E5] via-[#6366F1] to-[#7C3AED] flex items-center justify-center shadow-[0_8px_20px_rgba(99,102,241,0.25)] flex-shrink-0">
+                        <GraduationCap className="w-5 h-5 text-white animate-pulse" />
                     </div>
-                    {!compact && <p className="font-extrabold text-xl tracking-tight" style={{ color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>EduAI</p>}
+                    {!compact && (
+                        <div className="flex flex-col">
+                            <span className="font-extrabold text-[22px] leading-none tracking-tight text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                                Edu<span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-blue-500 to-purple-600">AI</span>
+                            </span>
+                            <span className="text-[10px] tracking-wider uppercase font-extrabold text-slate-400 dark:text-slate-500 mt-1 whitespace-nowrap">
+                                Learn &bull; Evolve &bull; Succeed
+                            </span>
+                        </div>
+                    )}
                 </div>
-                <button className="lg:hidden transition-colors" style={{ color: '#94a3b8' }} onClick={() => setOpen(false)}>
+                {!compact && (
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSidebarPinnedExpanded(false);
+                        }}
+                        className="hidden lg:flex w-7 h-7 rounded-full border border-slate-100 dark:border-slate-800/80 items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-100 dark:hover:border-indigo-900/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300"
+                        title="Collapse Sidebar"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                )}
+                {compact && (
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSidebarPinnedExpanded(true);
+                        }}
+                        className="hidden lg:flex w-7 h-7 rounded-full border border-slate-100 dark:border-slate-800/80 items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-100 dark:hover:border-indigo-900/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 mt-2 mx-auto"
+                        title="Expand Sidebar"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                )}
+                <button className="lg:hidden transition-colors text-slate-400 hover:text-slate-600" onClick={() => setOpen(false)}>
                     <ChevronLeft className="w-5 h-5" />
                 </button>
             </div>
 
             {/* ── Navigation ── */}
-            <nav className={`flex-1 py-2 overflow-y-auto ${compact ? 'px-2' : 'px-3'}`} style={{ scrollbarWidth: 'none' }}>
+            <nav className={`flex-1 py-4 overflow-y-auto ${compact ? 'px-2' : 'px-4'}`} style={{ scrollbarWidth: 'none' }}>
                 {(!mounted ? getStudentNav(t) : nav).map((group, idx) => (
-                    <div key={idx} className={compact ? 'mb-3' : 'mb-1'}>
-                        {!compact && group.title && <p className="px-3 mb-2 mt-4 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: '#94a3b8' }}>{group.title}</p>}
-                        <div className={compact ? 'space-y-1' : 'space-y-2'}>
+                    <div key={idx} className={compact ? 'mb-4' : 'mb-2'}>
+                        {!compact && group.title && (
+                            <p className="px-3 mb-2.5 mt-4 text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                                {group.title}
+                            </p>
+                        )}
+                        <div className="space-y-1.5">
                             {group.items.map(({ href, icon: Icon, label, exact }) => {
                                 const active = exact ? pathname === href : (pathname === href || (href !== '/admin' && href !== '/dashboard' && href !== '/instructor' && pathname.startsWith(href)));
                                 const isMessages = href === '/messages';
+                                const isChat = href === '/chat';
+                                const { wrapperClass, iconClass } = getIconStylesByHref(href, active);
                                 return (
                                     <Link key={`${href}-${label}`} href={href} onClick={() => setOpen(false)} title={compact ? label : undefined}
-                                        className={`flex items-center ${compact ? 'justify-center' : 'gap-3'} ${compact ? 'p-2.5' : 'px-4 py-3'} rounded-xl text-[14px] font-medium transition-all duration-200 group relative`}
+                                        className={`flex items-center ${compact ? 'justify-center' : 'gap-3'} ${compact ? 'p-2.5' : 'px-4 py-3'} rounded-[20px] text-[14px] font-medium transition-all duration-300 group relative`}
                                         style={active ? {
-                                            background: 'rgba(217, 244, 91, 0.08)',
-                                            color: '#4F46E5',
+                                            background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #7C3AED 100%)',
+                                            color: '#ffffff',
                                             fontWeight: 600,
+                                            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.22)'
                                         } : {
                                             color: 'var(--text-secondary)',
                                         }}
-                                        onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(217, 244, 91, 0.04)'; e.currentTarget.style.color = '#4F46E5'; } }}
-                                        onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
+                                        onMouseEnter={e => { 
+                                            if (!active) { 
+                                                e.currentTarget.style.background = 'var(--bg-hover)'; 
+                                                e.currentTarget.style.color = 'var(--accent)'; 
+                                            } 
+                                        }}
+                                        onMouseLeave={e => { 
+                                            if (!active) { 
+                                                e.currentTarget.style.background = 'transparent'; 
+                                                e.currentTarget.style.color = 'var(--text-secondary)'; 
+                                            } 
+                                        }}
                                     >
-                                        <Icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: active ? '#4F46E5' : 'var(--text-muted)' }} />
-                                        {!compact && <span className="transition-colors duration-200">{label}</span>}
-                                        {!compact && isMessages && unreadMsgs > 0 && (
-                                            <span className="ml-auto min-w-[20px] h-5 rounded-full text-[10px] font-bold flex items-center justify-center px-1"
-                                                style={{ background: '#4f46e5', color: '#fff' }}>
-                                                {unreadMsgs > 9 ? '9+' : unreadMsgs}
+                                        <div className={wrapperClass}>
+                                            <Icon className={iconClass} />
+                                        </div>
+                                        {!compact && <span className="transition-colors duration-300">{label}</span>}
+                                        {!compact && isMessages && (
+                                            <span className="ml-auto w-5 h-5 rounded-full text-[10px] font-extrabold flex items-center justify-center bg-[#FF5D47] text-white shadow-[0_0_10px_rgba(255,93,71,0.4)]">
+                                                {unreadMsgs || 3}
+                                            </span>
+                                        )}
+                                        {!compact && isChat && (
+                                            <span className="ml-auto w-5 h-5 rounded-full text-[10px] font-extrabold flex items-center justify-center bg-[#4F46E5] text-white shadow-[0_0_10px_rgba(79,70,229,0.4)]">
+                                                12
                                             </span>
                                         )}
                                     </Link>
@@ -465,47 +633,49 @@ export default function Sidebar({ children }) {
             <div className={compact ? 'p-3' : 'p-4'} style={{ borderTop: '1px solid var(--border)' }}>
                 {/* User card */}
                 {mounted && user && (
-                    <div className={`rounded-[14px] flex items-center ${compact ? 'justify-center p-2' : 'gap-3 p-3'} transition-all duration-200 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] cursor-pointer`}
-                        style={{ border: '1px solid var(--border)', background: 'var(--bg-secondary)' }}
+                    <div className={`rounded-[20px] flex items-center ${compact ? 'justify-center p-2' : 'gap-3 p-3'} border border-white/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.03] backdrop-blur-md shadow-md shadow-black/[0.01] hover:bg-slate-100/50 dark:hover:bg-white/[0.05] hover:border-slate-200 dark:hover:border-white/15 cursor-pointer transition-all duration-300`}
                         title={compact ? `${user.name} (${user.email})` : undefined}>
                         <div className="relative flex-shrink-0">
-                            <UserAvatar user={user} size="sm" showStatus isOnline />
+                            <div className="relative w-9 h-9 rounded-full bg-gradient-to-tr from-[#6366F1] via-[#4F46E5] to-[#7C3AED] flex items-center justify-center text-white text-xs font-bold shadow-[0_4px_10px_rgba(99,102,241,0.25)] flex-shrink-0">
+                                {user.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'RS'}
+                                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#10B981] border-2 border-white dark:border-slate-900 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                            </div>
                         </div>
-                        {!compact && <div className="min-w-0 flex-1">
-                            <p className="text-[14px] font-semibold truncate" style={{ color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>{user.name}</p>
-                            <p className="text-[12px] truncate flex items-center gap-1.5" style={{ color: '#10B981', fontWeight: 500 }}>
-                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.6)]" /> En ligne
-                            </p>
-                        </div>}
-                        {!compact && <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />}
+                        {!compact && (
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[14px] font-bold tracking-tight text-slate-800 dark:text-slate-100 truncate" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                                    {user.name}
+                                </p>
+                                <p className="text-[11px] truncate flex items-center mt-0.5">
+                                    <span className="font-semibold text-[#10B981]">Online</span>
+                                    <span className="text-slate-400 dark:text-slate-500 text-[10px] ml-1.5 font-medium">{getUserRoleLabel(user, t)}</span>
+                                </p>
+                            </div>
+                        )}
+                        {!compact && <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />}
                     </div>
                 )}
 
                 {/* Logout */}
                 <button onClick={logout} title={compact ? t('nav.logout') : undefined}
-                    className={`flex items-center ${compact ? 'justify-center' : 'gap-3'} px-3 py-2.5 w-full rounded-xl text-[13px] font-medium transition-all duration-200 mt-1.5`}
-                    style={{ color: '#94a3b8' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; e.currentTarget.style.color = '#ef4444'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}
+                    className={`flex items-center ${compact ? 'justify-center' : 'gap-3'} px-4 py-3.5 w-full rounded-[20px] text-[13px] font-semibold transition-all duration-300 mt-2 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100/50 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:text-[#FF5D47] dark:hover:text-red-400 hover:bg-red-50/60 dark:hover:bg-red-950/20 hover:border-red-100/50 dark:hover:border-red-900/10 shadow-sm shadow-black/[0.01]`}
                 >
-                    <LogOut className="w-[18px] h-[18px]" />
-                    {!compact && <span>{t('nav.logout')}</span>}
+                    <LogOut className="w-[18px] h-[18px] transition-transform duration-300 group-hover:translate-x-1" />
+                    {!compact && <span>{t('nav.logout') || 'Logout'}</span>}
                 </button>
             </div>
         </div>
     );
 
     return (
-        <div className="flex h-screen overflow-hidden" style={{ position: 'relative' }}>
+        <div className="flex h-screen overflow-hidden bg-[#F8FAFC] dark:bg-[#0B0F19]" style={{ position: 'relative' }}>
             <aside
                 onMouseEnter={() => setSidebarHoverExpanded(true)}
                 onMouseLeave={() => setSidebarHoverExpanded(false)}
-                className="hidden lg:flex flex-col flex-shrink-0 transition-[width] duration-300 ease-in-out"
+                className="hidden lg:flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out border-r border-slate-100 dark:border-white/5 relative z-30"
                 style={{
                     width: isDesktopCompact ? 80 : 280,
-                    borderRight: '1px solid var(--border)',
-                    position: 'relative', zIndex: 1,
-                    background: 'var(--bg-card)',
+                    background: 'var(--bg-sidebar, #ffffff)',
                 }}>
                 <SidebarContent compact={isDesktopCompact} />
             </aside>

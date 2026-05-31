@@ -7,7 +7,7 @@ import {
     SendHorizontal, Sparkles, User, ArrowLeft,
     MessageSquare, Lightbulb, BookOpen, HelpCircle,
     RotateCcw, Copy, Check, Upload, FileText, X, Loader2,
-    CheckCircle2, AlertCircle,
+    CheckCircle2, AlertCircle, Database, Search,
 } from 'lucide-react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
@@ -22,7 +22,7 @@ const QUICK_REPLIES = [
 ];
 
 
-function TypingIndicator() {
+function TypingIndicator({ searchingRAG }) {
     return (
         <div className="flex gap-2.5 items-end pl-0.5">
             <div className="w-6 h-6 rounded-[10px] bg-[#6366f1]/90 flex items-center justify-center flex-shrink-0 shadow-sm shadow-[#6366f1]/20">
@@ -30,16 +30,25 @@ function TypingIndicator() {
             </div>
             <div
                 className="bg-[#1a1b2e] border border-[#252840] rounded-[14px] rounded-bl-[4px]
-          px-4 py-3 flex items-center gap-[5px]
+          px-4 py-3 flex items-center gap-2
           shadow-[0_2px_12px_rgba(0,0,0,0.3)]"
             >
-                {[0, 130, 260].map((d) => (
-                    <span
-                        key={d}
-                        className="w-[5px] h-[5px] rounded-full bg-[#7c84a3]"
-                        style={{ animation: `tdot 1.3s cubic-bezier(.45,.05,.55,.95) ${d}ms infinite` }}
-                    />
-                ))}
+                {searchingRAG ? (
+                    <>
+                        <Search className="w-3.5 h-3.5 text-[#6366f1] animate-pulse" />
+                        <span className="text-[11px] text-[#7c84a3]">Recherche dans le contenu du cours…</span>
+                    </>
+                ) : (
+                    <>
+                        {[0, 130, 260].map((d) => (
+                            <span
+                                key={d}
+                                className="w-[5px] h-[5px] rounded-full bg-[#7c84a3]"
+                                style={{ animation: `tdot 1.3s cubic-bezier(.45,.05,.55,.95) ${d}ms infinite` }}
+                            />
+                        ))}
+                    </>
+                )}
             </div>
         </div>
     );
@@ -61,6 +70,34 @@ function CopyBtn({ text }) {
                 ? <Check className="w-3 h-3 text-[#34d399]" />
                 : <Copy className="w-3 h-3" />}
         </button>
+    );
+}
+
+
+function SourceChips({ sources }) {
+    if (!sources || sources.length === 0 || (sources.length === 1 && typeof sources[0] === 'string')) return null;
+
+    // Filter to only show structured sources (from RAG)
+    const ragSources = sources.filter((s) => typeof s === 'object' && s.lessonTitle);
+    if (ragSources.length === 0) return null;
+
+    return (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+            {ragSources.map((src, i) => (
+                <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md
+                        bg-[#6366f1]/10 border border-[#6366f1]/20
+                        text-[10px] text-[#a5b4fc] font-medium"
+                >
+                    <BookOpen className="w-2.5 h-2.5" />
+                    {src.lessonTitle || `Leçon`}
+                    {src.relevance !== undefined && (
+                        <span className="text-[#6366f1]/60 ml-0.5">{src.relevance}%</span>
+                    )}
+                </span>
+            ))}
+        </div>
     );
 }
 
@@ -131,6 +168,8 @@ function MessageBubble({ msg, index }) {
                                     >
                                         {msg.content}
                                     </ReactMarkdown>
+                                    {/* Source chips for RAG answers */}
+                                    {!isUser && msg.sources && <SourceChips sources={msg.sources} />}
                                 </div>
                                 <CopyBtn text={msg.content} />
                             </div>
@@ -250,7 +289,56 @@ function PdfUploadZone({ courseId, lessonId, pdfInfo, setPdfInfo }) {
 }
 
 
-function EmptyState({ onSuggest, courseId, lessonId, pdfInfo, setPdfInfo }) {
+function RagStatusBanner({ ragStatus, onIngest, ingesting }) {
+    if (!ragStatus) return null;
+
+    // Course is indexed and ready
+    if (ragStatus.ready) {
+        return (
+            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-[10px] bg-[#0f2a3a]/60 border border-[#6366f1]/20">
+                <Database className="w-3.5 h-3.5 text-[#6366f1] flex-shrink-0" />
+                <p className="text-[11px] text-[#a5b4fc] flex-1">
+                    <span className="font-medium">RAG actif</span> — {ragStatus.chunks} chunks indexés
+                    {ragStatus.hasEmbeddings ? ' avec embeddings' : ' (recherche textuelle)'}
+                     · {ragStatus.indexedLessons}/{ragStatus.totalLessons} leçons
+                </p>
+            </div>
+        );
+    }
+
+    // Not indexed
+    return (
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px] bg-[#2a1f0f]/60 border border-[#f59e0b]/20">
+            <AlertCircle className="w-3.5 h-3.5 text-[#f59e0b] flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-[#fbbf24] font-medium">
+                    Le contenu IA de ce cours n'est pas encore indexé.
+                </p>
+                <p className="text-[10px] text-[#f59e0b]/60">
+                    L'instructeur peut indexer le cours pour activer la recherche intelligente.
+                </p>
+            </div>
+            {onIngest && (
+                <button
+                    onClick={onIngest}
+                    disabled={ingesting}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold
+                        bg-[#f59e0b]/15 border border-[#f59e0b]/30 text-[#fbbf24]
+                        hover:bg-[#f59e0b]/25 transition-all disabled:opacity-50"
+                >
+                    {ingesting ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                        'Indexer'
+                    )}
+                </button>
+            )}
+        </div>
+    );
+}
+
+
+function EmptyState({ onSuggest, courseId, lessonId, pdfInfo, setPdfInfo, ragStatus }) {
     const cards = [
         { emoji: '🎯', label: 'Comment fonctionne ce cours ?' },
         { emoji: '📌', label: 'Quels sont les points clés ?' },
@@ -264,9 +352,14 @@ function EmptyState({ onSuggest, courseId, lessonId, pdfInfo, setPdfInfo }) {
                     <MessageSquare className="w-6 h-6 text-[#6366f1]" />
                 </div>
                 <div>
-                    <h2 className="text-white font-semibold text-[15px] mb-1">Tuteur IA — Questions sur le PDF</h2>
+                    <h2 className="text-white font-semibold text-[15px] mb-1">
+                        {ragStatus?.ready ? 'Tuteur IA — Recherche Intelligente' : 'Tuteur IA — Questions sur le PDF'}
+                    </h2>
                     <p className="text-[#7c84a3] text-[13px] leading-relaxed max-w-[300px]">
-                        Importez un PDF puis posez vos questions. Le tuteur répond uniquement à partir du contenu du document.
+                        {ragStatus?.ready
+                            ? 'Posez vos questions. Le tuteur recherche dans le contenu indexé du cours pour des réponses précises.'
+                            : 'Importez un PDF puis posez vos questions. Le tuteur répond uniquement à partir du contenu du document.'
+                        }
                     </p>
                 </div>
             </div>
@@ -275,7 +368,7 @@ function EmptyState({ onSuggest, courseId, lessonId, pdfInfo, setPdfInfo }) {
                 <PdfUploadZone courseId={courseId} lessonId={lessonId} pdfInfo={pdfInfo} setPdfInfo={setPdfInfo} />
             </div>
 
-            {pdfInfo && (
+            {(pdfInfo || ragStatus?.ready) && (
                 <div className="grid grid-cols-2 gap-[8px] w-full max-w-[360px]">
                     {cards.map((c) => (
                         <button
@@ -308,7 +401,10 @@ function ChatPageInner() {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [searchingRAG, setSearchingRAG] = useState(false);
     const [pdfInfo, setPdfInfo] = useState(null);
+    const [ragStatus, setRagStatus] = useState(null);
+    const [ingesting, setIngesting] = useState(false);
     const bottomRef = useRef(null);
     const inputRef = useRef(null);
     const MAX_CHARS = 500;
@@ -326,9 +422,30 @@ function ChatPageInner() {
         }).catch(() => { });
     }, [id, lessonId]);
 
+    // Check RAG status on mount
+    useEffect(() => {
+        chatAPI.getRagStatus(id).then(({ data }) => {
+            setRagStatus(data);
+        }).catch(() => { });
+    }, [id]);
+
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, loading]);
+
+    const handleIngest = async () => {
+        setIngesting(true);
+        try {
+            await chatAPI.ingestCourse(id);
+            // Refresh status
+            const { data } = await chatAPI.getRagStatus(id);
+            setRagStatus(data);
+        } catch (err) {
+            console.error('Ingest error:', err);
+        } finally {
+            setIngesting(false);
+        }
+    };
 
     const sendMessage = async (text) => {
         const content = (text || input).trim();
@@ -336,20 +453,24 @@ function ChatPageInner() {
         setMessages((p) => [...p, { role: 'user', content, timestamp: Date.now() }]);
         setInput('');
         setLoading(true);
+        setSearchingRAG(ragStatus?.ready || false);
         try {
             const history = messages.map((m) => ({ role: m.role, content: m.content }));
             const { data } = await chatAPI.ask(id, content, history, lessonId || undefined);
-            const sourceLabel = data.source ? ` (source : ${data.source})` : '';
+            setSearchingRAG(false);
             setMessages((p) => [...p, {
                 role: 'assistant',
                 content: data.answer,
                 timestamp: Date.now(),
                 source: data.source,
+                sources: data.sources,
             }]);
         } catch {
+            setSearchingRAG(false);
             setMessages((p) => [...p, { role: 'assistant', content: '❌ Une erreur est survenue. Veuillez réessayer.', timestamp: Date.now() }]);
         } finally {
             setLoading(false);
+            setSearchingRAG(false);
             setTimeout(() => inputRef.current?.focus(), 50);
         }
     };
@@ -413,7 +534,9 @@ function ChatPageInner() {
                                     {lessonName ? `Tuteur IA — ${lessonName}` : 'Tuteur IA'}
                                 </h1>
                                 <p className="text-[10px] text-[#34d399] font-medium truncate max-w-[200px]">
-                                    {pdfInfo ? `📄 ${pdfInfo.filename}` : lessonId ? '📖 Leçon sélectionnée' : 'En ligne'}
+                                    {ragStatus?.ready
+                                        ? `🔍 RAG actif — ${ragStatus.chunks} chunks`
+                                        : pdfInfo ? `📄 ${pdfInfo.filename}` : lessonId ? '📖 Leçon sélectionnée' : 'En ligne'}
                                 </p>
                             </div>
                         </div>
@@ -431,6 +554,11 @@ function ChatPageInner() {
                         )}
                     </div>
 
+                    {/* RAG status banner */}
+                    <div className="flex-shrink-0 pb-2">
+                        <RagStatusBanner ragStatus={ragStatus} onIngest={handleIngest} ingesting={ingesting} />
+                    </div>
+
                     {/* PDF upload bar when in conversation mode */}
                     {messages.length > 0 && (
                         <div className="flex-shrink-0 pb-3">
@@ -441,10 +569,10 @@ function ChatPageInner() {
                     <div className="cs flex-1 overflow-y-auto min-h-0 pr-[2px]">
                         <div className="flex flex-col gap-5 py-1">
                             {messages.length === 0
-                                ? <EmptyState onSuggest={sendMessage} courseId={id} lessonId={lessonId} pdfInfo={pdfInfo} setPdfInfo={setPdfInfo} />
+                                ? <EmptyState onSuggest={sendMessage} courseId={id} lessonId={lessonId} pdfInfo={pdfInfo} setPdfInfo={setPdfInfo} ragStatus={ragStatus} />
                                 : messages.map((m, i) => <MessageBubble key={i} msg={m} index={i} />)
                             }
-                            {loading && <TypingIndicator />}
+                            {loading && <TypingIndicator searchingRAG={searchingRAG} />}
                             <div ref={bottomRef} className="h-1" />
                         </div>
                     </div>
@@ -489,7 +617,7 @@ function ChatPageInner() {
                                     e.target.style.height = Math.min(e.target.scrollHeight, 108) + 'px';
                                 }}
                                 onKeyDown={onKey}
-                                placeholder="Posez votre question sur le PDF…"
+                                placeholder={ragStatus?.ready ? "Posez votre question sur le cours…" : "Posez votre question sur le PDF…"}
                                 disabled={loading}
                                 className="flex-1 bg-transparent text-[13px] text-[#e2e6f0] placeholder-[#3d4266]
                   resize-none focus:outline-none leading-[1.6] max-h-[108px]"

@@ -1,7 +1,8 @@
 import express from 'express';
 import Course from '../models/Course.js';
 import { protect } from '../middleware/auth.js';
-import { aiChat } from '../services/rag/tutorService.js';
+import { aiChat, generateQuiz, generateSummary } from '../services/rag/tutorService.js';
+import { countChunksByLesson } from '../services/rag/vectorStore.js';
 
 const router = express.Router();
 
@@ -59,7 +60,7 @@ async function getLessonContent(courseId, lessonId) {
 
 /**
  * POST /api/ai/lesson-quiz
- * Generate a quiz based ONLY on the current lesson content
+ * Generate a quiz based on the current lesson content — uses RAG when available
  */
 router.post('/lesson-quiz', protect, async (req, res) => {
   try {
@@ -69,12 +70,27 @@ router.post('/lesson-quiz', protect, async (req, res) => {
       return res.status(400).json({ message: 'courseId et lessonId sont requis.' });
     }
 
+    // Check if RAG chunks exist for this lesson
+    const chunkCount = await countChunksByLesson(lessonId);
+
+    if (chunkCount > 0) {
+      // Use RAG-powered quiz generation
+      console.log(`🧠 [ai/lesson-quiz] RAG mode — ${chunkCount} chunks pour leçon ${lessonId}`);
+      try {
+        const questions = await generateQuiz(courseId, '', difficulty, count, '', lessonId);
+        return res.json({ questions });
+      } catch (err) {
+        console.error('⚠️ [ai/lesson-quiz] RAG quiz failed, fallback:', err.message);
+        // Fall through to legacy
+      }
+    }
+
+    // Legacy fallback: extract and use raw content
     const rawContent = await getLessonContent(courseId, lessonId);
     if (!rawContent) {
       return res.status(400).json({ message: 'Aucun contenu lisible trouvé pour cette leçon.' });
     }
 
-    // Limit context to 30,000 characters
     const context = rawContent.substring(0, 30000);
     const difficultyLabel = difficulty === 1 ? 'débutant' : difficulty === 3 ? 'avancé' : 'intermédiaire';
 
@@ -130,7 +146,7 @@ Réponds uniquement sous le format JSON valide suivant, sans aucun bloc markdown
 
 /**
  * POST /api/ai/lesson-summary
- * Generate a summary based ONLY on the current lesson content
+ * Generate a summary based on the current lesson content — uses RAG when available
  */
 router.post('/lesson-summary', protect, async (req, res) => {
   try {
@@ -140,12 +156,25 @@ router.post('/lesson-summary', protect, async (req, res) => {
       return res.status(400).json({ message: 'courseId et lessonId sont requis.' });
     }
 
+    // Check if RAG chunks exist for this lesson
+    const chunkCount = await countChunksByLesson(lessonId);
+
+    if (chunkCount > 0) {
+      console.log(`📝 [ai/lesson-summary] RAG mode — ${chunkCount} chunks pour leçon ${lessonId}`);
+      try {
+        const summary = await generateSummary(courseId, '', lessonId);
+        return res.json({ summary, source: 'RAG — contenu indexé' });
+      } catch (err) {
+        console.error('⚠️ [ai/lesson-summary] RAG summary failed, fallback:', err.message);
+      }
+    }
+
+    // Legacy fallback
     const rawContent = await getLessonContent(courseId, lessonId);
     if (!rawContent) {
       return res.status(400).json({ message: 'Aucun contenu lisible trouvé pour cette leçon.' });
     }
 
-    // Limit context to 30,000 characters
     const context = rawContent.substring(0, 30000);
 
     const systemPrompt = `Tu es un assistant pédagogique.

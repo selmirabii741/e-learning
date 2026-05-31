@@ -22,6 +22,7 @@ import messageRoutes from './routes/messages.js';
 import forumRoutes from './routes/forum.js';
 import aiRoutes from './routes/ai.js';
 import globalChatRoutes from './routes/globalChat.js';
+import ragRoutes from './routes/rag.js';
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/global-chat/conversations', globalChatRoutes);
+app.use('/api/rag', ragRoutes);
 
 
 app.get('/', (req, res) => res.json({ message: '🎓 EduAI API is running', version: '1.0', docs: '/api/health' }));
@@ -84,7 +86,7 @@ async function connectMongo(attempt = 1) {
     await mongoose.connect(process.env.MONGODB_URI, mongooseOptions);
     console.log('✅ MongoDB connecté');
 
-    //autoIngestAllCourses();
+    autoIngestAllCourses();
   } catch (err) {
     console.error(`❌ MongoDB tentative ${attempt} échouée: ${err.message}`);
     if (attempt < 5) {
@@ -104,14 +106,15 @@ mongoose.connection.on('disconnected', () => {
 });
 mongoose.connection.on('reconnected', () => {
   console.log('✅ MongoDB reconnecté');
-  //autoIngestAllCourses();
+  autoIngestAllCourses();
 });
 
 
 async function autoIngestAllCourses() {
   try {
     const { default: Course } = await import('./models/Course.js');
-    const { ingestCourseContent } = await import('./services/rag/tutorService.js');
+    const { ingestCourse } = await import('./services/rag/tutorService.js');
+    const { default: LessonChunk } = await import('./models/LessonChunk.js');
 
     const courses = await Course.find({ isPublished: true });
     if (!courses.length) {
@@ -119,27 +122,34 @@ async function autoIngestAllCourses() {
       return;
     }
 
-    console.log(`🔄 Auto-ingest RAG : ${courses.length} cours...`);
+    // Skip courses that already have chunks (avoid re-indexing on every restart)
+    const coursesToIngest = [];
+    for (const course of courses) {
+      const existingChunks = await LessonChunk.countDocuments({ courseId: course._id });
+      if (existingChunks === 0 && course.lessons.some((l) => l.content?.trim() || l.pdfData)) {
+        coursesToIngest.push(course);
+      }
+    }
+
+    if (coursesToIngest.length === 0) {
+      console.log(`ℹ️  RAG: ${courses.length} cours déjà indexés ou sans contenu.`);
+      return;
+    }
+
+    console.log(`🔄 Auto-ingest RAG : ${coursesToIngest.length} cours à indexer...`);
     let ingested = 0;
 
-    for (const course of courses) {
-      const allContent = course.lessons
-        .filter((l) => l.content?.trim())
-        .map((l) => `# ${l.title}\n\n${l.content}`)
-        .join('\n\n---\n\n');
-
-      if (!allContent.trim()) continue;
-
+    for (const course of coursesToIngest) {
       try {
-        const chunks = await ingestCourseContent(String(course._id), allContent);
-        console.log(`  ✅ "${course.title}" — ${chunks} chunks`);
+        const result = await ingestCourse(String(course._id));
+        console.log(`  ✅ "${course.title}" — ${result.totalChunks} chunks, ${result.lessonsIngested} leçons`);
         ingested++;
       } catch (e) {
         console.warn(`  ⚠️  Erreur ingestion "${course.title}": ${e.message}`);
       }
     }
 
-    console.log(`✅ RAG prêt : ${ingested}/${courses.length} cours ingéré(s).`);
+    console.log(`✅ RAG prêt : ${ingested}/${coursesToIngest.length} cours ingéré(s).`);
   } catch (err) {
     console.error('❌ Erreur auto-ingest RAG:', err.message);
   }

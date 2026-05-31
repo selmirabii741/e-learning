@@ -15,6 +15,9 @@ export default function InstructorHome() {
     const { user } = useAuthStore();
     const [stats, setStats] = useState(null);
     const [recentCourses, setRecentCourses] = useState([]);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => { setMounted(true); }, []);
 
     useEffect(() => {
         if (!user) return;
@@ -63,6 +66,8 @@ export default function InstructorHome() {
         </div>
     );
 
+    const instructorName = (mounted && user?.name?.split(' ')[0]) || 'Instructeur';
+
     return (
         <Sidebar>
             <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-8 animate-fade-in" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -70,8 +75,8 @@ export default function InstructorHome() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
                     <div>
-                        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
-                            Bonjour, {user?.name?.split(' ')[0] || 'Instructeur'} <span className="text-2xl animate-wave origin-bottom-right">👋</span>
+                        <h1 suppressHydrationWarning className="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+                            Bonjour, {instructorName} <span className="text-2xl animate-wave origin-bottom-right">👋</span>
                         </h1>
                         <p className="text-sm text-slate-500 font-medium mt-1">
                             Voici un aperçu de votre activité aujourd'hui.

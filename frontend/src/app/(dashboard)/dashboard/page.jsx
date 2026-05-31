@@ -196,6 +196,9 @@ export default function DashboardPage() {
     const [progress, setProgress] = useState([]);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => { setMounted(true); }, []);
 
     // Get tasks from planner store (calendar)
     const tasks = usePlannerStore((state) => state.tasks);
@@ -219,7 +222,7 @@ export default function DashboardPage() {
     const completed = progress.filter(p => p.completionPercentage === 100);
     const activeCourses = progress.filter(p => p.completionPercentage < 100);
 
-    const firstName = user?.name?.split(' ')[0] || 'Étudiant';
+    const firstName = (mounted && user?.name?.split(' ')[0]) || 'Étudiant';
 
     return (
         <Sidebar>
@@ -227,7 +230,7 @@ export default function DashboardPage() {
 
                 {/* ── Greeting Header (no Explorer button) ── */}
                 <div style={{ marginBottom: 28 }}>
-                    <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                    <h1 suppressHydrationWarning style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                         Bonjour, {firstName} 👋
                     </h1>
                     <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4, fontWeight: 500 }}>

@@ -141,6 +141,10 @@ export const chatAPI = {
     const params = lessonId ? `?lessonId=${lessonId}` : '';
     return api.get(`/chat/${courseId}/pdf-status${params}`);
   },
+  // ── RAG endpoints ──
+  getRagStatus: (courseId) => api.get(`/rag/status/${courseId}`),
+  ingestCourse: (courseId) => api.post(`/rag/ingest-course/${courseId}`),
+  ingestLesson: (courseId, lessonId) => api.post(`/rag/ingest-lesson/${courseId}/${lessonId}`),
 };
 
 export const globalChatAPI = {

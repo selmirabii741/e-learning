@@ -133,11 +133,11 @@ export default function HomePage() {
               <BrainCircuit className="w-5 h-5" /> E-Learning Professionnel
             </motion.div>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="font-[900] mb-8 max-w-[700px]" style={{ fontSize: 'clamp(2.8rem, 6vw, 5.5rem)', lineHeight: 1.05, letterSpacing: '-2px', color: '#0F172A' }}>
-              Apprenez avec intelligence, <br />
-              <span style={{ color: '#4F46E5', textShadow: '0 0 30px rgba(79, 70, 229, 0.4)' }}>progressez avec passion.</span>
+              Votre apprentissage, <br />
+              <span style={{ color: '#4F46E5', textShadow: '0 0 30px rgba(79, 70, 229, 0.4)' }}>plus simple et plus intelligent.</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-[1.1rem] leading-[1.8] mb-10 max-w-xl" style={{ color: '#475569' }}>
-              Une nouvelle expérience d'apprentissage plus humaine. Notre IA vous accompagne à chaque étape pour garantir votre réussite.
+              Une plateforme e-learning intelligente qui vous accompagne dans votre progression grâce à des cours interactifs et un tuteur IA disponible à tout moment.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-4">
               <button onClick={reg} className="inline-flex items-center gap-3 font-[800] px-10 py-5 rounded-full text-[1.1rem] shadow-[0_0_25px_rgba(79,70,229,0.3)] hover:shadow-[0_0_45px_rgba(79,70,229,0.5)] hover:-translate-y-1 transition-all" style={{ backgroundColor: '#4F46E5', color: '#FFFFFF' }}>
@@ -167,11 +167,11 @@ export default function HomePage() {
 
               <motion.div animate={{ y: [12, -12, 12] }} transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }} className="absolute bottom-24 -right-12 p-5 rounded-[24px] flex items-center gap-5 shadow-[0_15px_40px_rgba(0,0,0,0.6)]" style={{ background: 'rgba(255, 255, 255, 0.8)', border: '1px solid rgba(79,70,229,0.15)', backdropFilter: 'blur(14px)' }}>
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner" style={{ backgroundColor: 'rgba(99, 102, 241, 0.15)', color: '#6366F1' }}>
-                  <Award className="w-7 h-7" />
+                  <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div>
-                  <p className="font-[800] text-[1.2rem]" style={{ color: '#0F172A' }}>Certifications</p>
-                  <p className="text-[15px] font-[600]" style={{ color: '#64748B' }}>Reconnues mondialement</p>
+                  <p className="font-[800] text-[1.2rem]" style={{ color: '#0F172A' }}>Professeurs qualifiés</p>
+                  <p className="text-[15px] font-[600]" style={{ color: '#64748B' }}>Experts de confiance</p>
                 </div>
               </motion.div>
             </div>

@@ -6,20 +6,23 @@ import User from '../models/User.js';
 import Message from '../models/Message.js';
 import AccessRequest from '../models/AccessRequest.js';
 import { protect, restrictTo } from '../middleware/auth.js';
-import { ingestCourseContent } from '../services/rag/tutorService.js';
+import { ingestCourse, ingestLesson } from '../services/rag/tutorService.js';
+import { deleteChunksByLesson, deleteChunksByCourse } from '../services/rag/vectorStore.js';
 import { uploadPDF } from '../middleware/upload.js';
 
 
 function reIngestCourse(course) {
-  const content = course.lessons
-    .filter((l) => l.content)
-    .map((l) => `## ${l.title}\n${l.content}`)
-    .join('\n\n');
-  if (content.trim()) {
-    ingestCourseContent(course._id.toString(), content).catch((err) =>
-      console.error('RAG ingest error:', err.message)
-    );
-  }
+  // Trigger real RAG ingestion (async, non-blocking)
+  ingestCourse(course._id.toString()).catch((err) =>
+    console.error('RAG ingest error:', err.message)
+  );
+}
+
+function reIngestSingleLesson(courseId, lessonId) {
+  // Trigger real RAG ingestion for a single lesson (async, non-blocking)
+  ingestLesson(courseId.toString(), lessonId.toString()).catch((err) =>
+    console.error('RAG lesson ingest error:', err.message)
+  );
 }
 
 const router = express.Router();
@@ -813,6 +816,8 @@ router.delete('/:id', protect, restrictTo('instructor', 'admin'), async (req, re
     }
 
     await Progress.deleteMany({ course: course._id });
+    // Clean up all RAG chunks for this course
+    await deleteChunksByCourse(course._id);
     await course.deleteOne();
 
     res.json({ message: 'Cours supprimé' });
@@ -847,10 +852,13 @@ router.post('/:id/lessons', protect, restrictTo('instructor', 'admin'), async (r
 
     await course.save();
 
+    // Ingest only the new lesson (more efficient than re-indexing entire course)
+    const newLesson = course.lessons[course.lessons.length - 1];
+    if (content?.trim()) {
+      reIngestSingleLesson(req.params.id, newLesson._id);
+    }
 
-    reIngestCourse(course);
-
-    res.status(201).json({ course, lesson: course.lessons[course.lessons.length - 1] });
+    res.status(201).json({ course, lesson: newLesson });
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
@@ -880,8 +888,10 @@ router.put('/:id/lessons/:lessonId', protect, restrictTo('instructor', 'admin'),
 
     await course.save();
 
-
-    reIngestCourse(course);
+    // Re-ingest this specific lesson if content changed
+    if (content !== undefined || title !== undefined) {
+      reIngestSingleLesson(req.params.id, req.params.lessonId);
+    }
 
     res.json({ course, lesson });
   } catch (error) {
@@ -914,6 +924,11 @@ router.delete('/:id/lessons/:lessonId', protect, restrictTo('instructor', 'admin
     }
 
     await course.save();
+
+    // Clean up RAG chunks for the deleted lesson
+    deleteChunksByLesson(req.params.lessonId).catch((err) =>
+      console.error('RAG cleanup error:', err.message)
+    );
 
     res.json({ message: 'Leçon supprimée', course });
   } catch (error) {
@@ -964,8 +979,8 @@ router.post(
       lesson.pdfUrl = `/api/courses/${req.params.id}/lessons/${req.params.lessonId}/pdf`;
       await course.save();
 
-
-      reIngestCourse(course);
+      // Trigger RAG ingestion for this specific lesson
+      reIngestSingleLesson(req.params.id, req.params.lessonId);
 
       res.json({
         message: `PDF ingéré avec succès (${data.numpages} page(s), ${extractedText.length} caractères extraits)`,

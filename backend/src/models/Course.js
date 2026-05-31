@@ -9,6 +9,7 @@ const lessonSchema = new mongoose.Schema({
   pdfName: { type: String },
   duration: { type: Number, default: 0 },
   order: { type: Number, required: true },
+  aiIndexed: { type: Boolean, default: false },
 });
 
 const courseSchema = new mongoose.Schema(

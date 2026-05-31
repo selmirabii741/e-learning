@@ -1,5 +1,6 @@
 import express from 'express';
 import { askTutor, generateQuiz, generateSummary } from '../services/rag/tutorService.js';
+import { countChunksByCourse, countChunksByLesson } from '../services/rag/vectorStore.js';
 import Course from '../models/Course.js';
 import { protect } from '../middleware/auth.js';
 import { uploadPDF } from '../middleware/upload.js';
@@ -108,7 +109,7 @@ router.get('/:courseId/pdf-status', protect, async (req, res) => {
 /**
  * POST /chat/:courseId
  * Ask a question to the AI tutor.
- * Uses uploaded PDF text first, falls back to lesson content.
+ * Uses RAG pipeline first, falls back to uploaded PDF text or lesson content.
  */
 
 async function getLessonContext(courseId, lessonId) {
@@ -162,15 +163,19 @@ router.post('/:courseId', protect, async (req, res) => {
       return res.status(400).json({ message: 'Question requise' });
     }
 
+    // Try RAG first — askTutor will use RAG when chunks exist
     const { context, source } = await getLessonContext(courseId, lessonId);
 
-
-    const result = await askTutor(courseId, question, history, context);
+    const result = await askTutor(courseId, question, history, context, lessonId || null);
 
     res.json({
       answer: result.answer,
-      sources: result.sources,
-      source,
+      sources: result.sources || [],
+      source: result.method === 'vector' || result.method === 'text'
+        ? `RAG (${result.method})`
+        : source,
+      provider: result.provider || undefined,
+      chunksUsed: result.chunksUsed || undefined,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -201,7 +206,7 @@ router.post('/:courseId', protect, async (req, res) => {
 
 /**
  * POST /chat/:courseId/quiz
- * Generate a quiz based on lesson content
+ * Generate a quiz based on lesson content — uses RAG when available
  */
 router.post('/:courseId/quiz', protect, async (req, res) => {
   try {
@@ -209,9 +214,25 @@ router.post('/:courseId/quiz', protect, async (req, res) => {
     const { courseId } = req.params;
     const { context } = await getLessonContext(courseId, lessonId);
 
-    if (!context) return res.status(400).json({ message: 'Aucun contenu disponible pour générer un quiz.' });
+    if (!context) {
+      // Check if RAG chunks exist before giving up
+      const chunkCount = lessonId
+        ? await countChunksByLesson(lessonId)
+        : await countChunksByCourse(courseId);
 
-    const quiz = await generateQuiz(courseId, '', difficulty === 'débutant' ? 1 : difficulty === 'avancé' ? 3 : 2, count || 5, context);
+      if (chunkCount === 0) {
+        return res.status(400).json({ message: 'Aucun contenu disponible pour générer un quiz.' });
+      }
+    }
+
+    const quiz = await generateQuiz(
+      courseId,
+      '',
+      difficulty === 'débutant' ? 1 : difficulty === 'avancé' ? 3 : 2,
+      count || 5,
+      context,
+      lessonId || null
+    );
     res.json({ quiz });
   } catch (error) {
     console.error(error);
@@ -221,7 +242,7 @@ router.post('/:courseId/quiz', protect, async (req, res) => {
 
 /**
  * POST /chat/:courseId/summary
- * Generate a summary based on lesson content
+ * Generate a summary based on lesson content — uses RAG when available
  */
 router.post('/:courseId/summary', protect, async (req, res) => {
   try {
@@ -229,9 +250,17 @@ router.post('/:courseId/summary', protect, async (req, res) => {
     const { courseId } = req.params;
     const { context } = await getLessonContext(courseId, lessonId);
 
-    if (!context) return res.status(400).json({ message: 'Aucun contenu disponible pour générer un résumé.' });
+    if (!context) {
+      const chunkCount = lessonId
+        ? await countChunksByLesson(lessonId)
+        : await countChunksByCourse(courseId);
 
-    const summary = await generateSummary(courseId, context);
+      if (chunkCount === 0) {
+        return res.status(400).json({ message: 'Aucun contenu disponible pour générer un résumé.' });
+      }
+    }
+
+    const summary = await generateSummary(courseId, context, lessonId || null);
     res.json({ summary });
   } catch (error) {
     console.error(error);
