@@ -1,25 +1,17 @@
 /**
- * rag.js — RAG ingestion and status endpoints.
- *
- * POST /api/rag/ingest-course/:courseId    — Re-index all lessons of a course
- * POST /api/rag/ingest-lesson/:courseId/:lessonId — Re-index one lesson
- * GET  /api/rag/status/:courseId            — Return indexing status
+ * ragController.js — Controller handling RAG ingestion and status requests.
+ * Decoupled from Express routing to implement Route-Controller-Service design.
  */
 
-import express from 'express';
 import mongoose from 'mongoose';
 import Course from '../models/Course.js';
 import LessonChunk from '../models/LessonChunk.js';
-import { protect, restrictTo } from '../middleware/auth.js';
-import { ingestCourse, ingestLesson } from '../services/rag/tutorService.js';
-
-const router = express.Router();
+import { ingestCourse as ingestCourseService, ingestLesson as ingestLessonService } from '../services/rag/tutorService.js';
 
 /**
- * POST /api/rag/ingest-course/:courseId
- * Re-index all lessons of a course — instructor/admin only.
+ * Trigger full course ingestion (indexing all lessons of a course in RAG)
  */
-router.post('/ingest-course/:courseId', protect, restrictTo('instructor', 'admin'), async (req, res) => {
+export async function ingestCourse(req, res) {
   try {
     const { courseId } = req.params;
 
@@ -38,26 +30,24 @@ router.post('/ingest-course/:courseId', protect, restrictTo('instructor', 'admin
       return res.status(403).json({ message: 'Non autorisé — ce n\'est pas votre cours' });
     }
 
-    console.log(`🔄 [RAG] Ingestion demandée pour "${course.title}" par ${req.user.name}`);
+    console.log(`🔄 [RAG Controller] Ingestion demandée pour "${course.title}" par ${req.user.name}`);
 
-    const result = await ingestCourse(courseId);
+    const result = await ingestCourseService(courseId);
 
     res.json({
       message: `Indexation terminée : ${result.lessonsIngested} leçon(s), ${result.totalChunks} chunks`,
       ...result,
     });
   } catch (error) {
-    console.error('❌ [RAG] Erreur ingest-course:', error.message);
+    console.error('❌ [RAG Controller] Erreur ingest-course:', error.message);
     res.status(500).json({ message: 'Erreur lors de l\'indexation', error: error.message });
   }
-});
-
+}
 
 /**
- * POST /api/rag/ingest-lesson/:courseId/:lessonId
- * Re-index a single lesson — instructor/admin only.
+ * Trigger single lesson ingestion in RAG
  */
-router.post('/ingest-lesson/:courseId/:lessonId', protect, restrictTo('instructor', 'admin'), async (req, res) => {
+export async function ingestLesson(req, res) {
   try {
     const { courseId, lessonId } = req.params;
 
@@ -75,24 +65,22 @@ router.post('/ingest-lesson/:courseId/:lessonId', protect, restrictTo('instructo
       return res.status(403).json({ message: 'Non autorisé' });
     }
 
-    const result = await ingestLesson(courseId, lessonId);
+    const result = await ingestLessonService(courseId, lessonId);
 
     res.json({
       message: `Leçon indexée : ${result.chunksStored} chunks`,
       ...result,
     });
   } catch (error) {
-    console.error('❌ [RAG] Erreur ingest-lesson:', error.message);
+    console.error('❌ [RAG Controller] Erreur ingest-lesson:', error.message);
     res.status(500).json({ message: 'Erreur lors de l\'indexation', error: error.message });
   }
-});
-
+}
 
 /**
- * GET /api/rag/status/:courseId
- * Return indexing status for a course.
+ * Get indexing status of a course
  */
-router.get('/status/:courseId', protect, async (req, res) => {
+export async function getStatus(req, res) {
   try {
     const { courseId } = req.params;
 
@@ -126,10 +114,7 @@ router.get('/status/:courseId', protect, async (req, res) => {
       ready: indexedLessons > 0 && chunks > 0,
     });
   } catch (error) {
-    console.error('❌ [RAG] Erreur status:', error.message);
+    console.error('❌ [RAG Controller] Erreur status:', error.message);
     res.status(500).json({ message: 'Erreur récupération statut', error: error.message });
   }
-});
-
-
-export default router;
+}

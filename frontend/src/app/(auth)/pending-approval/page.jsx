@@ -5,6 +5,7 @@ import { authAPI } from '@/lib/api';
 import { Upload, Clock, CheckCircle, XCircle, FileText, LogOut, RefreshCw, GraduationCap, Bot, Award, TrendingUp, BookOpen } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import LogoutModal from '@/components/ui/LogoutModal';
 
 export default function PendingApprovalPage() {
   const { user, logout } = useAuthStore();
@@ -13,6 +14,7 @@ export default function PendingApprovalPage() {
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const fetchVerification = useCallback(async () => {
     try {
@@ -177,11 +179,12 @@ export default function PendingApprovalPage() {
                 <RefreshCw size={16} /> Rafraîchir
               </button>
               <button
-                onClick={logout}
+                onClick={() => setShowLogoutModal(true)}
                 className="flex-1 py-3.5 rounded-xl font-[700] text-[0.95rem] flex items-center justify-center gap-2 transition-colors bg-[#FEF2F2] text-[#DC2626] hover:bg-[#FEE2E2]"
               >
                 <LogOut size={16} /> Déconnexion
               </button>
+              <LogoutModal open={showLogoutModal} onClose={() => setShowLogoutModal(false)} onConfirm={logout} />
             </div>
 
           </div>

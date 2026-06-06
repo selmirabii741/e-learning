@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { studentAPI } from '@/lib/api';
 import Sidebar from '@/components/layout/Sidebar';
+import LogoutModal from '@/components/ui/LogoutModal';
 import UserAvatar from '@/components/ui/UserAvatar';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
 import { useAuthStore } from '@/lib/authStore';
@@ -128,6 +129,7 @@ export default function ProfilePage() {
     const [pwSaving, setPwSaving] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [notifs, setNotifs] = useState({ email: true, courseUpdates: true, newLessons: true, reminders: false });
     const [selectedLang, setSelectedLang] = useState(lang);
     const fileInputRef = useRef(null);
@@ -229,6 +231,7 @@ export default function ProfilePage() {
     return (
         <Sidebar>
             <DeleteModal open={deleteOpen} onClose={() => setDeleteOpen(false)} onConfirm={handleDeleteAccount} loading={deleteLoading} />
+            <LogoutModal open={showLogoutModal} onClose={() => setShowLogoutModal(false)} onConfirm={logout} />
 
             <div className="page-header">
                 <div>
@@ -438,7 +441,7 @@ export default function ProfilePage() {
                             <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                                 Vous serez redirigé vers la page d'accueil après la déconnexion.
                             </p>
-                            <button onClick={logout} className="btn-secondary text-sm">
+                            <button onClick={() => setShowLogoutModal(true)} className="btn-secondary text-sm">
                                 <LogOut className="w-4 h-4" /> Se déconnecter
                             </button>
                         </SectionCard>

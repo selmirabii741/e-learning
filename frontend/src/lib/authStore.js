@@ -13,14 +13,14 @@ const writeCache = (user) => {
   try {
     if (user) localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
     else localStorage.removeItem(USER_CACHE_KEY);
-  } catch {}
+  } catch { }
 };
 
 export const useAuthStore = create((set, get) => ({
-  user:      readCache(),   // ← instant: from cache, no wait
-  token:     null,
+  user: readCache(),   // ← instant: from cache, no wait
+  token: null,
   isLoading: false,
-  error:     null,
+  error: null,
 
   syncKeycloakUser: async (kc) => {
     if (!kc?.token) return;

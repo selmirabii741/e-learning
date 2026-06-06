@@ -1,17 +1,19 @@
-import express from 'express';
-import { generateQuiz } from '../services/rag/tutorService.js';
+/**
+ * quizController.js — Controller handling quiz generation and submission scoring.
+ * Decoupled from Express routing to implement Route-Controller-Service design.
+ */
+
+import { generateQuiz as generateQuizService } from '../services/rag/tutorService.js';
 import Course from '../models/Course.js';
 import Progress from '../models/Progress.js';
-import { protect } from '../middleware/auth.js';
 
-const router = express.Router();
-
-
-router.post('/:courseId/generate', protect, async (req, res) => {
+/**
+ * Generate a new quiz based on a course topic
+ */
+export async function generateQuiz(req, res) {
   try {
     const { topic, difficulty = 1, count = 5 } = req.body;
     const { courseId } = req.params;
-
 
     const course = await Course.findById(courseId).select('lessons');
     const fallbackContext = course
@@ -21,7 +23,7 @@ router.post('/:courseId/generate', protect, async (req, res) => {
         .join('\n\n---\n\n')
       : '';
 
-    const questions = await generateQuiz(courseId, topic, difficulty, count, fallbackContext);
+    const questions = await generateQuizService(courseId, topic, difficulty, count, fallbackContext);
 
     res.json({ questions, generatedAt: new Date().toISOString() });
   } catch (error) {
@@ -30,14 +32,12 @@ router.post('/:courseId/generate', protect, async (req, res) => {
 
     const msg = error?.message || '';
 
-
     if (msg.includes('Aucun contenu')) {
       return res.status(200).json({
         error: true,
         message: '📚 Ce cours ne contient pas encore de leçons avec du texte. Ajoutez du contenu dans au moins une leçon pour générer un quiz.',
       });
     }
-
 
     if (msg.includes('GEMINI_API_KEY') || msg.includes('API_KEY_INVALID')) {
       return res.status(200).json({
@@ -46,14 +46,12 @@ router.post('/:courseId/generate', protect, async (req, res) => {
       });
     }
 
-
     if (msg.includes('quota') || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
       return res.status(200).json({
         error: true,
         message: '⚠️ Quota Gemini dépassé. Réessayez dans quelques instants.',
       });
     }
-
 
     if (msg.includes('JSON') || msg.includes('parseable')) {
       return res.status(200).json({
@@ -64,10 +62,12 @@ router.post('/:courseId/generate', protect, async (req, res) => {
 
     res.status(500).json({ message: 'Erreur génération quiz', error: msg });
   }
-});
+}
 
-
-router.post('/:courseId/submit', protect, async (req, res) => {
+/**
+ * Submit quiz answers, evaluate the score, and save student progress
+ */
+export async function submitQuiz(req, res) {
   try {
     const { answers, questions } = req.body;
     const { courseId } = req.params;
@@ -93,6 +93,4 @@ router.post('/:courseId/submit', protect, async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Erreur soumission quiz', error: error.message });
   }
-});
-
-export default router;
+}

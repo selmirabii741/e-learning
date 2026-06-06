@@ -132,7 +132,9 @@ router.post('/:id/upload', protect, upload.single('file'), async (req, res) => {
       extractedText = data.text?.trim() || '';
     } else if (mime.startsWith('image/')) {
       try {
-        const worker = await Tesseract.createWorker(['fra', 'eng']);
+        const worker = await Tesseract.createWorker(['fra', 'eng'], 1, {
+          cachePath: 'data/tessdata',
+        });
         const { data: { text } } = await worker.recognize(req.file.buffer);
         await worker.terminate();
         extractedText = text?.trim() || '';

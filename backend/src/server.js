@@ -11,18 +11,18 @@ const __dirname = dirname(__filename);
 // Load .env from project root (two levels up from backend/src/)
 dotenv.config({ path: resolve(__dirname, '../../.env') });
 
-import authRoutes from './routes/auth.js';
-import courseRoutes from './routes/courses.js';
-import chatRoutes from './routes/chat.js';
-import quizRoutes from './routes/quiz.js';
-import progressRoutes from './routes/progress.js';
-import adminRoutes from './routes/admin.js';
-import studentRoutes from './routes/students.js';
-import messageRoutes from './routes/messages.js';
-import forumRoutes from './routes/forum.js';
-import aiRoutes from './routes/ai.js';
-import globalChatRoutes from './routes/globalChat.js';
-import ragRoutes from './routes/rag.js';
+import authRoutes from './controllers/authController.js';
+import courseRoutes from './controllers/coursesController.js';
+import chatRoutes from './controllers/chat.js';
+import quizRoutes from './controllers/quiz.js';
+import progressRoutes from './controllers/progress.js';
+import adminRoutes from './controllers/admin.js';
+import studentRoutes from './controllers/students.js';
+import messageRoutes from './controllers/messages.js';
+import forumRoutes from './controllers/forum.js';
+import aiRoutes from './controllers/ai.js';
+import globalChatRoutes from './controllers/globalChat.js';
+import ragRoutes from './controllers/rag.js';
 
 const app = express();
 

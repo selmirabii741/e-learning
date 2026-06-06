@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/lib/authStore';
 
 import UserAvatar from '@/components/ui/UserAvatar';
+import LogoutModal from '@/components/ui/LogoutModal';
 import { useLangStore } from '@/lib/i18n';
 import SearchModal from '@/components/ui/SearchModal';
 import {
@@ -446,6 +447,7 @@ export default function Sidebar({ children }) {
     const [sidebarPinnedExpanded, setSidebarPinnedExpanded] = useState(false);
     const [sidebarHoverExpanded, setSidebarHoverExpanded] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -657,7 +659,7 @@ export default function Sidebar({ children }) {
                 )}
 
                 {/* Logout */}
-                <button onClick={logout} title={compact ? t('nav.logout') : undefined}
+                <button onClick={() => setShowLogoutModal(true)} title={compact ? t('nav.logout') : undefined}
                     className={`flex items-center ${compact ? 'justify-center' : 'gap-3'} px-4 py-3.5 w-full rounded-[20px] text-[13px] font-semibold transition-all duration-300 mt-2 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100/50 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:text-[#FF5D47] dark:hover:text-red-400 hover:bg-red-50/60 dark:hover:bg-red-950/20 hover:border-red-100/50 dark:hover:border-red-900/10 shadow-sm shadow-black/[0.01]`}
                 >
                     <LogOut className="w-[18px] h-[18px] transition-transform duration-300 group-hover:translate-x-1" />
@@ -773,6 +775,7 @@ export default function Sidebar({ children }) {
                 </main>
             </div>
             <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+            <LogoutModal open={showLogoutModal} onClose={() => setShowLogoutModal(false)} onConfirm={logout} t={t} />
             <NetworkBackground mode={(!mounted || dark) ? 'dark' : 'light'} />
         </div>
     );
